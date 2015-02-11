@@ -1,12 +1,13 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Turret.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="AppMain.cs">
     <Files>
-      <File FileName="AppMain.cs" Line="136" Column="27" />
+      <File FileName="AppMain.cs" Line="174" Column="4" />
       <File FileName="Waypoint.cs" Line="26" Column="28" />
-      <File FileName="Space.cs" Line="157" Column="30" />
-      <File FileName="Enemy.cs" Line="117" Column="15" />
-      <File FileName="Turret.cs" Line="61" Column="23" />
+      <File FileName="Space.cs" Line="32" Column="28" />
+      <File FileName="Enemy.cs" Line="80" Column="6" />
+      <File FileName="Turret.cs" Line="53" Column="29" />
+      <File FileName="Bullet.cs" Line="64" Column="5" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

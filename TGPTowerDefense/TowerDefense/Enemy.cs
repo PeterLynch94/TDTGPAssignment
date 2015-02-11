@@ -19,9 +19,10 @@ namespace TowerDefense
 		private TextureInfo				spriteTex;
 		private Vector2 				pos;
 		private Vector2 				turnPos;
-		private int 					dir, newDir, gold, health, colTimer, colTimerMax;
+		private int 					dir, newDir, gold, colTimer, colTimerMax, spW, spH, ID;
+		private float					health;
 		private float					speed;
-		private bool					turning;
+		private bool					turning, dead;
 		
 		
 		public Enemy (Scene scene, Vector2 p, int d, Random rand)
@@ -30,13 +31,17 @@ namespace TowerDefense
 			sprite = new SpriteUV(spriteTex);
 			sprite.Position = p;
 			sprite.Quad.S 	= spriteTex.TextureSizef;
-			health = 10;
+			spH = sprite.TextureInfo.Texture.Height;
+			spW = sprite.TextureInfo.Texture.Width;
+			health = 100.0f;
 			speed = 1.0f;
 			dir = d;
 			gold = 50;
+			dead = false;
 			colTimerMax = rand.Next(32, 64);
 			colTimer = colTimerMax;
 			turning = false;
+			ID = 0;
 			scene.AddChild(sprite);
 
 			
@@ -44,33 +49,52 @@ namespace TowerDefense
 		
 		public void Update(float t)
 		{
+			if(!dead)
+			{
+				pos = sprite.Position;
+				if(health <= 0)
+				{
+					Dispose();
+				}
+				if(dir == 0)
+				{
+					pos = new Vector2(pos.X  -= speed, pos.Y);
+				}else if (dir == 1)
+				{
+					pos = new Vector2(pos.X  += speed, pos.Y);
+				}else if (dir == 2)
+				{
+					pos = new Vector2(pos.X, pos.Y -= speed);
+				}else if (dir == 3)
+				{
+					pos = new Vector2(pos.X, pos.Y+= speed);
+				}
+				if(turning)
+				{
+					checkTurn ();
+				}
+				
+				sprite.Position = new Vector2(pos.X, pos.Y);
+				if(health < 0.0f)
+				{
+					setDead(true);
+				}
+			}
 			
-			pos = sprite.Position;
-			if(health <= 0)
-			{
-				Dispose();
-			}
-			if(dir == 0)
-			{
-				pos = new Vector2(pos.X  -= speed, pos.Y);
-			}else if (dir == 1)
-			{
-				pos = new Vector2(pos.X  += speed, pos.Y);
-			}else if (dir == 2)
-			{
-				pos = new Vector2(pos.X, pos.Y -= speed);
-			}else if (dir == 3)
-			{
-				pos = new Vector2(pos.X, pos.Y+= speed);
-			}
-			if(turning)
-			{
-				checkTurn ();
-			}
-			
-			sprite.Position = new Vector2(pos.X, pos.Y);
 			
 		}
+		
+		private void setDead(bool p)
+		{
+			dead = p;
+			if(dead)
+			{
+				//sprite.Position = new Vector2(1000.0f, 1000.0f);
+				sprite.Visible = false;
+				
+			}
+		}
+		
 		
 		private void checkTurn()
 		{
@@ -113,7 +137,12 @@ namespace TowerDefense
 			newDir = d;
 		}
 		
-		public void takeDamage(int damage)
+		public SpriteUV getSprite()
+		{
+			return sprite;
+		}
+		
+		public void takeDamage(float damage)
 		{
 			health -= damage;
 		}
@@ -125,14 +154,20 @@ namespace TowerDefense
 		
 		public int getHeight()
 		{
-			return sprite.TextureInfo.Texture.Width;
+			return spH;
 		}
 		
 		public int getWidth()
 		{
-			return sprite.TextureInfo.Texture.Height;
+			return spW;
 		}
+
 		
+		
+		public bool getDead()
+		{
+			return dead;
+		}
 		public Vector2 GetCenter()
 		{
 			Vector2 ret;
@@ -147,7 +182,15 @@ namespace TowerDefense
 			
 		}
 		
+		public int getID()
+		{
+			return ID;
+		}
 		
+		public void setID(int id)
+		{
+			ID = id;
+		}
 		
 	}
 }

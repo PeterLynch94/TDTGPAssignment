@@ -31,13 +31,20 @@ namespace TowerDefense
 		private static TextureInfo										bgTex;
 		private static SpriteUV											bgSprite;
 		
-		private static Enemy											en;
+
 		
 		private static bool												quitGame;
 		private static int												screenH, screenW;
 		private static int[]											mapData;
+		
 		private static List<Space>										grid;
+		private static List<Space>										wayTiles;
+		private static List<Space>										decoTiles;
+		
 		private static List<Bullet>										bullets;
+		private static List<Enemy>										enemies;
+		private static List<Turret>										turrets;
+		
 		private static Random											rand;
 		private static Turret											turr;
 		
@@ -89,8 +96,14 @@ namespace TowerDefense
 //			gameScene.AddChild(bgSprite);
 			
 			Vector2 ePos = new Vector2(0.0f, 0.0f);
+			
 			grid = new List<Space>();
+			wayTiles = new List<Space>();
+			decoTiles = new List<Space>();
+			
 			bullets = new List<Bullet>();
+			enemies = new List<Enemy>();
+			turrets = new List<Turret>();
 			int typeCount = 0;
 			bool enemySpawn = false;
 			
@@ -110,17 +123,47 @@ namespace TowerDefense
 						ePos = new Vector2(pos.X + 32.0f, pos.Y - 50.0f);
 					}
 					typeCount++;
-					grid.Add(temp);
+					if(temp.getType() == 20 || temp.getType() == 21 || temp.getType() == 22 || temp.getType() == 23)
+					{
+						wayTiles.Add(temp);
+					}
+					else if (temp.getType() != 10)
+					{
+						decoTiles.Add(temp);
+					} else 
+					{
+						grid.Add (temp);
+					}
 				}
 			}
+			Vector2 turrPos = new Vector2(400.0f, 400.0f);
+			Turret tempTurr = new Turret(gameScene, turrPos, 1);
+			turrets.Add(tempTurr);
+			
+			turrPos = new Vector2(800.0f, 200.0f);
+			tempTurr = new Turret(gameScene, turrPos, 2);
+			turrets.Add(tempTurr);
+			
+			turrPos = new Vector2(250.0f, 250.0f);
+			tempTurr = new Turret(gameScene, turrPos, 3);
+			turrets.Add(tempTurr);
 			
 			
+	
+				
+				
 			rand = new Random();
+			for(int i = 0; i < 3; i++)
+			{
+				ePos.X += 5.0f;
+				ePos.Y -= 5.0f;
+				Enemy ene = new Enemy(gameScene, ePos, 2, rand);
+				enemies.Add(ene);
+			}
 			
-			en = new Enemy(gameScene, ePos, 2, rand);
 			ePos.X -= 70.0f;
 			ePos.Y -= 90.0f;
-			turr = new Turret(gameScene, ePos);
+			turr = new Turret(gameScene, ePos, 47);
 			uiScene.RootWidget.AddChildLast(panel);
 			
 			UISystem.SetScene(uiScene);
@@ -134,14 +177,43 @@ namespace TowerDefense
 		{
 			
 
-			en.Update(0);
-			turr.RotateToEnemy(en.GetCenter());
-			turr.Update (0);
-			if(turr.fireCheck() == true)
+				foreach(Turret t in turrets)
+				{
+					t.Update(0);
+					if(t.getLockOn())
+					{
+						for(int j = 0; j < enemies.Count; j++)
+						{
+							if(enemies[j].getID() == t.getID())
+							{
+								t.RotateToEnemy(enemies[j].GetCenter());
+							}
+						}
+						
+					} else {
+						for(int i = 0; i < enemies.Count; i++)
+						{
+							if(enemies[i].getID() == 0 && t.getLockOn() == false)
+							{
+								enemies[i].setID(t.getID());
+								t.setLockOn(true);
+							}
+						}
+					}
+					if(t.fireCheck() == true)
+					{
+						Bullet bu = new Bullet(gameScene, t.getPos(), t.getDirection());
+						bullets.Add (bu);
+					}
+				}
+				
+			for(int i = 0; i < enemies.Count; i++)
 			{
-				Bullet bu = new Bullet(gameScene, turr.getPos(), turr.getDirection());
-				bullets.Add (bu);
+				enemies[i].Update(0);
 			}
+
+			
+			
 			BulletUpdate ();
 			GridUpdate();
 			
@@ -150,14 +222,41 @@ namespace TowerDefense
 		
 		public static void BulletUpdate()
 		{
-			foreach(Bullet b in bullets)
+			for(int j = 0; j < bullets.Count; j++)
 			{
-				b.Update ();
-				Vector2 bPos = b.getPos ();
-//				if(bPos.X > screenW || bPos.X < 0 || bPos.Y > screenH || bPos.Y < 0)
-//				{
-//					b.Dispose ();
-//				}
+				bullets[j].Update ();
+				Vector2 bPos = bullets[j].getPos ();
+				int bW = bullets[j].getWidth();
+				int bH = bullets[j].getHeight();
+				
+				for(int i = 0; i < enemies.Count; i++)
+				{
+					if(!enemies[i].getDead () && !bullets[j].getDead())
+					{
+						if(bPos.X < enemies[i].getPos().X + enemies[i].getWidth() && bPos.X + bW > enemies[i].getPos ().X &&
+						   bPos.Y < enemies[i].getPos().Y + enemies[i].getHeight() && bPos.X + bH > enemies[i].getPos().Y )
+						{
+							enemies[i].takeDamage(bullets[j].getDamage());
+							
+							bullets[j].setDead(true);
+							bullets.RemoveAt(j);
+							resetLockOns();
+							break;
+						}
+					}
+				}
+			}
+		}
+		
+		public static void resetLockOns()
+		{
+			foreach(Turret t in turrets)
+			{
+				t.setLockOn(false);
+			}
+			foreach(Enemy e in enemies)
+			{
+				e.setID(0);
 			}
 		}
 		
@@ -179,44 +278,45 @@ namespace TowerDefense
 					int sX = s.getX ();
 					int sY = s.getY ();
 					int sT = s.getType();
-					if(sT == 10)
+
+					if(touchX <= (sW + sX) && touchX >= sX && touchY <= (sH + sY) && touchY >= sY)
 					{
-						if(touchX <= (sW + sX) && touchX >= sX && touchY <= (sH + sY) && touchY >= sY)
+						s.setSelected();
+						Vector2 pos = new Vector2(sX, sY);
+						foreach(Space h in grid)
 						{
-							s.setSelected();
-							Vector2 pos = new Vector2(sX, sY);
-							foreach(Space h in grid)
+							
+							if(h.getX() != pos.X || h.getY() != pos.Y)
 							{
-								if(h.getType() == 10)
-								{
-									if(h.getX() != pos.X || h.getY() != pos.Y)
-									{
-										h.unSelect();	
-									}
-								}
+								h.unSelect();	
 							}
+						
 						}
 					}
+				
 				}
 			}
 			
-			foreach(Space h in grid)
+			foreach(Space w in wayTiles)
 			{
-				if(h.getWayDir() != -1)
+				foreach(Enemy en in enemies)
 				{
-					int wayW = h.getWWidth();
-					int wayH = h.getWHeight();
-					int wayX = h.getWX ();
-					int wayY = h.getWY ();
-					
-					float enX = en.getPos().X;
-					float enY = en.getPos().Y;
-					int enH = en.getHeight();
-					int enW = en.getWidth();
-					if(enX <= (wayW + wayX) && (enX + enW) >= wayX && enY <= (wayH + wayY) && (enY + enH) >= wayY)
+					if(!en.getDead ())
 					{
-						en.setDirection(h.getWayDir());
-						en.randDelay(rand);
+						int wayW = w.getWWidth();
+						int wayH = w.getWHeight();
+						int wayX = w.getWX ();
+						int wayY = w.getWY ();
+						
+						float enX = en.getPos().X;
+						float enY = en.getPos().Y;
+						int enH = en.getHeight();
+						int enW = en.getWidth();
+						if(enX <= (wayW + wayX) && (enX + enW) >= wayX && enY <= (wayH + wayY) && (enY + enH) >= wayY)
+						{
+							en.setDirection(w.getWayDir());
+							en.randDelay(rand);
+						}
 					}
 				}
 				

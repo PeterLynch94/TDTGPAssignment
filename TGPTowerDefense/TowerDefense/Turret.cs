@@ -11,6 +11,8 @@ using Sce.PlayStation.Core.Input;
 using Sce.PlayStation.HighLevel.GameEngine2D;
 using Sce.PlayStation.HighLevel.GameEngine2D.Base;
 
+
+
 namespace TowerDefense
 {
 	
@@ -20,15 +22,15 @@ namespace TowerDefense
 		private SpriteUV 				sprite;
 		private TextureInfo				spriteTex;
 		private turretStats				stats;
-		private int						level, spentGold;
+		private int						level, spentGold, ID;
 		private Vector2					position, direction;
 		private int 					width, height;
 		private float 					fireTimer;
-		private bool 					canFire;
+		private bool 					canFire, lockedOn;
 
 
 		
-		public Turret (Scene scene, Vector2 pos)
+		public Turret (Scene scene, Vector2 pos, int id)
 		{
 			spriteTex = new TextureInfo("Application/graphics/TURRET.png");
 			sprite = new SpriteUV(spriteTex);
@@ -40,10 +42,11 @@ namespace TowerDefense
 			sprite.Position = pos;
 			position = pos;
 			level = 0;
-			sprite.Quad.S 	= spriteTex.TextureSizef;
+			sprite.Quad.S = spriteTex.TextureSizef;
 			width = sprite.TextureInfo.Texture.Width;
 			height = sprite.TextureInfo.Texture.Height;
-
+			ID = id;
+			lockedOn = false;
 			scene.AddChild(sprite);
 		}
 		
@@ -117,6 +120,28 @@ namespace TowerDefense
 		{
 			return position;
 		}
+		
+		public void setLockOn(bool lockon)
+		{
+			lockedOn = lockon;
+		}
+		
+		public bool getLockOn()
+		{
+			return lockedOn;
+		}
+		
+		
+		public int getID()
+		{
+			return ID;
+		}
+		
+		public void setID(int id)
+		{
+			ID = id;
+		}
+		
 		
 		private Vector2 GetCenter()
 		{
